@@ -1,7 +1,10 @@
- function W = controller(theta_need,theta,thetadot_need,thetadot,m,g,k,b,I,L,Dthetadot)
-Kd =2;
- Kp =1.4;
- Ku=0.95;
+ function W = controller(theta_need,theta,thetadot_need,thetadot,m,g,k,b,I,L,Dthetadot, params)
+ Kp = params(1);
+ Kd = params(2);
+ Ku = params(3);
+% Kd =2;
+%  Kp =1.4;
+%  Ku=0.95;
  %вычисление ошибки
 % e = -Kp*(theta_need-theta)+Kd*(thetadot);%при использовании ПД регулятора
 e = -Kp*(theta_need-theta)+Kd*(thetadot)+Ku*Dthetadot;%при использовании ПИД регулятора
