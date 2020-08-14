@@ -87,6 +87,8 @@ function cost = simulate(params)
         Time(j) = j*dt;
     end
     
+    % Функция стоимости (ошибки) при использовании заданых коэффициентов
+    % управления
     cost = 1/(end_time - start_time) * sum((theta_need - theta).^2) * dt;
 end
 
