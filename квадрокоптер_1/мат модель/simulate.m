@@ -1,5 +1,6 @@
 function cost = simulate(params)
     %% Параметры моделирования
+    cost(1)=0;
     start_time = 0;
     end_time = 4;
     dt = 0.005; % шаг дискретизации
@@ -84,12 +85,12 @@ function cost = simulate(params)
         Acceleration(j,:) = a(:,1);
         Angles(j,:) = theta;
         Rates(j,:) = thetadot;
-        Time(j) = j*dt;
-    end
-    
+        Time(j) = j*dt; 
     % Функция стоимости (ошибки) при использовании заданых коэффициентов
     % управления
-    cost = 1/(end_time - start_time) * sum((theta_need - theta).^2) * dt;
+    cost(j+1) =cost(j)+ 1/(end_time - start_time) * sum((theta_need - theta).^2) * dt;
+    end
+    cost=cost(j+1)
 end
 
 
