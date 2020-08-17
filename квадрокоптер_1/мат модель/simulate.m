@@ -89,8 +89,12 @@ function cost = simulate(params)
     % Функция стоимости (ошибки) при использовании заданых коэффициентов
     % управления
     cost(j+1) =cost(j)+ 1/(end_time - start_time) * sum((theta_need - theta).^2) * dt;
+        if isnan(cost(j+1))
+            cost = NaN;
+            return
+        end
     end
-    cost=cost(j+1)
+    cost=cost(j+1);
 end
 
 
