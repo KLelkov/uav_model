@@ -2,7 +2,7 @@ function cost = simulate(params)
     %% Параметры моделирования
     cost(1)=0;
     start_time = 0;
-    end_time = 4;
+    end_time = 6;
     dt = 0.005; % шаг дискретизации
     nSim = (end_time - start_time)/ dt; % количество точек при моделировании
     times = start_time:dt:end_time;
