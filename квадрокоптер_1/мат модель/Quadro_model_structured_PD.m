@@ -38,7 +38,7 @@ cd =0.4;
 b =0.7426*10^-6;
 k = 1.4851*10^-5;
 % Необходимая уголовая скорость вращения винтов для зависания на месте
-W_hover = 49257.0198; % квадрат угловой скорости
+W_hover = 220^2; % квадрат угловой скорости
 %% Моделирование шумов
 % Simulate some disturbance in the angular velocity.
 % The magnitude of the deviation is in radians / second.
@@ -57,13 +57,14 @@ dW = 50; % изменение угловой скорости для придания ускорения БЛА
  %коэффициенты ПД регулятора
  Kd =0;
  Kp =1;
+ theta_integral = 0;
 % Скорости вращения винтов
 %i = [W_hover+dW, W_hover+dW, W_hover+dW, W_hover+dW];
 %% Основной цикл
 for j = 1:nSim
     % Расчёт угловых скоростей в связанной (body) СК
      omega = thetadot2omega(thetadot, theta);
-    i = controller(theta_need,theta,thetadot_need,thetadot,m,g,k,b,I,L,Dthetadot);
+    i = controller(theta_need,theta,thetadot_need,thetadot,m,g,k,b,I,L,theta_integral, [3, 2, 0.01]);
     % Расчёт линейных ускорений
     a = acceleration(i, theta, xdot, m, g, k, cd,S,r0);
     % Расчёт угловых ускорений
@@ -75,6 +76,7 @@ for j = 1:nSim
     thetadot = omega2thetadot(omega, theta);
     % Расчёт углов ориентации
     theta = theta + dt * thetadot;
+    theta_integral = theta_integral + theta * dt;
     % Расчёт скоростей движения
     xdot = xdot + dt * a;
     % Расчёт координат
