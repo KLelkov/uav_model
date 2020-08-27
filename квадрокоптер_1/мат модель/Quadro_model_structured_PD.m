@@ -1,4 +1,4 @@
-clear;
+% clear;
 clc
 %% Параметры моделирования
 start_time = 0;
@@ -64,7 +64,7 @@ dW = 50; % изменение угловой скорости для придания ускорения БЛА
 for j = 1:nSim
     % Расчёт угловых скоростей в связанной (body) СК
      omega = thetadot2omega(thetadot, theta);
-    i = controller(theta_need,theta,thetadot_need,thetadot,m,g,k,b,I,L,theta_integral, [3, 2, 0.01]);
+    i = controller(theta_need,theta,thetadot_need,thetadot,m,g,k,b,I,L,theta_integral, [3.2, 1.9, 0.01]); % [5.28, 2.61, 0.048]
     % Расчёт линейных ускорений
     a = acceleration(i, theta, xdot, m, g, k, cd,S,r0);
     % Расчёт угловых ускорений
