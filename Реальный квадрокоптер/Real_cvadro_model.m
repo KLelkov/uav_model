@@ -29,8 +29,10 @@ psi(1)=5;theta(1)=0;gamma(1)=0;
 %Начальные условия по координатам
 x(1)=0;y(1)=0;z(1)=0;
 %Параметры для ПИД регулятора
-psi_need =0;% желаемый угол курса
-psi_integral =0;
+sigma_need = [0,0,0];% желаемые углы ориентации
+sigma_integral =[0,0,0];
+%Собираем моменты инерции в один массив
+I =[Ix,Iy,Iz];
 for i=1:t
     %%линейные ускорения
     %для оси х
@@ -79,16 +81,18 @@ for i=1:t
     dwz = -dwbx*sind(psi(i))*cosd(theta(i))+dwby*(cosd(psi(i))*sind(gamma(i))+sind(psi(i))*sind(theta(i))*cosd(gamma(i)))+dwbz*(cosd(psi(i))*cosd(gamma(i))+sind(psi(i))*sind(theta(i))*sind(gamma(i)));
     %вычисление угловых скоростей и углов курса,крена и тангажа
     dpsi = (wby(i+1)*cosd(gamma(i))-wbz(i+1)*sind(gamma(i)))/cosd(theta(i));
-    dtheta=wbz(i+1)*cosd(gamma(i))+wby(i+1)*sind(gamma(i));
-    dgamma=wbx(i+1)-(wby(i+1)*cosd(gamma(i))-wbz(i+1)*sind(gamma(i)))*tand(theta(i));
-    psi(i+1) =psi(i)+dpsi; theta(i+1) =theta(i)+dtheta;gamma(i+1) =gamma(i)+dgamma;
+    dtheta= wbz(i+1)*cosd(gamma(i))+wby(i+1)*sind(gamma(i));
+    dgamma= wbx(i+1)-(wby(i+1)*cosd(gamma(i))-wbz(i+1)*sind(gamma(i)))*tand(theta(i));
+    psi(i+1) = psi(i)+dpsi; theta(i+1) =theta(i)+dtheta;gamma(i+1) =gamma(i)+dgamma;
     %вычисление скоростей и координат квадрокоптера в ИСК
     Vx(i+1)= Vx(i)+dVx;Vy(i+1)= Vy(i)+dVy;Vz(i+1)= Vz(i)+dVz;
     x(i+1)= x(i)+Vx(i+1);  y(i+1)= y(i)+Vy(i+1);  z(i+1)= z(i)+Vz(i+1);
     %интеграл от угла
-    psi_integral = psi_integral+psi(i+1);
+    sigma = [theta(i+1),gamma(i+1),psi(i+1)];
+    sigmadot =[dtheta,dgamma,dpsi];
+    sigma_integral = sigma_integral+sigma;
     %ПИД регулятор
-    [W1,W2,W3,W4] = controller(psi(i+1),theta(i+1),gamma(i+1),psi_need,dpsi,m,g,k,0.7426*10^-6,Ix,L,psi_integral);
+    [W1,W2,W3,W4] = controller(sigma_need,sigma,sigmadot,m,g,k,0.7426*10^-6,I,L,sigma_integral);
 end
 %%построение графиков
 %для координат
