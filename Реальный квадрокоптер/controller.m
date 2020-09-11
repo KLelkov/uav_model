@@ -1,16 +1,17 @@
-  function [W1,W2,W3,W4] = controller(theta_need,theta,thetadot,m,g,k,b,I,L,theta_integral, params)
-%  Kp = params(1);
-%  Kd = params(2);
-%  Ku = params(3);
- Kd =1.9;
- Kp =-3.2;
- Ku=-0.1;
+  function [W1,W2,W3,W4] = controller(theta_need,theta,thetadot,m,g,k,b,I,L,theta_integral, Kp,Kd,Ku)
+%  Kp =3.86489;
+%  Kd =3.1282;
+%  Ku=2.47186;
+% Kp = 3.5;
+% Kd =1.2;
+% Ku=3.3;
+L=0.36/2;
  %вычисление ошибки
-% e = -Kp*(theta_need-theta)+Kd*(thetadot);%??? ????????????? ?? ??????????
-e = -Kp*(theta_need-theta)+Kd*(thetadot)+Ku*theta_integral;%??? ????????????? ??? ??????????
+% e = -Kp*(theta_need-theta)+Kd*(thetadot);
+e = -Kp*(theta_need-theta)+Kd*(thetadot)+Ku*theta_integral;
  %вычисление величины сигнала
- W1=128.5-(2*b*e(1)*I(1)+e(3)*I(3)*k*L)/(4*b*k*L);
- W2=128.5 + e(3)*I(3)/(4*b)-e(2)*I(2)/(2*k*L);
- W3=128.5- (-2*b*e(1)*I(1)+e(3)*I(3)*k*L)/(4*b*k*L);
- W4=128.5+e(3)*I(3)/(4*b)+e(2)*I(2)/(2*k*L);
+ W1=128.5 + L*I(3)*e(1)/4/k+e(2)*L*I(1)/k/4+e(3)*L*I(2)/b/4;
+ W2=128.5 - L*I(3)*e(1)/4/k + e(2)*L*I(1)/k/4 - e(3)*L*I(2)/b/4;
+ W3=128.5 -  L*I(3)*e(1)/4/k - e(2)*L*I(1)/k/4 + e(3)*L*I(2)/b/4;
+ W4=128.5 + L*I(3)*e(1)/4/k - e(2)*L*I(1)/k/4 - e(3)*L*I(2)/b/4;
  end
