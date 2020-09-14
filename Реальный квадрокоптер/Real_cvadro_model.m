@@ -29,7 +29,8 @@ psi(1)=0;theta(1)=0;gamma(1)=0;
 %Начальные условия по координатам
 x(1)=0;y(1)=0;z(1)=0;
 %Параметры для ПИД регулятора
-Vy_need = 1;
+y_need = 10;
+Vy_need = 3;
 sigma_need = [0,0,0];% желаемые углы ориентации
 sigma_integral =[0,0,0];
 %Собираем моменты инерции в один массив
@@ -95,8 +96,10 @@ for i=1:t/dt
     sigma_integral = sigma_integral+sigma*dt;
     %ПИД регулятор
 %     [W1,W2,W3,W4] = controller(sigma_need,sigma,sigmadot,m,g,k,0.7426*10^-4,I,L,sigma_integral);
-    OMEGA(:,i)=[W1,W2,W3,W4];
-     [W1,W2,W3,W4] = controller_velocity(Vy(i+1),Vy_need);
+%     [W1,W2,W3,W4] = controller_velocity(Vy(i+1),Vy_need);
+[W1,W2,W3,W4] = controller_Hight(y(i+1),y_need,Vy(i+1));
+OMEGA(:,i)=[W1,W2,W3,W4];
+     
 end
 %%построение графиков
 %для координат
