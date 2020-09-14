@@ -5,7 +5,7 @@ a = 0.36;%длина квадрокоптера и ширина
 k = 1.4851*10^-4;% k - подъемный коэффициен
 h = 0.07;%высота квадрокоптра
 b = h/2;
-L = 485/2; %расстояние от винта квадрокоптера до цента
+L = 485/2/1000; %расстояние от винта квадрокоптера до цента
 m = 0.3;%масса квадрокоптера
 g = 9.81;%ускорение свободного падения
 Ix = 1/12*m*(3*L^3+h^2);%момент инерции
@@ -21,19 +21,21 @@ n=105/2;
 % Необходимая уголовая скорость вращения винтов для зависания на месте
 W1 = 128.5; W2 = 128.5; W3 = 128.5; W4 = 128.5; 
 %Начальные условия по скоростям в географической и связанной СК
-Vbx(1) =0; Vby(1) =0;Vbz(1) =0;Vx(1)=0;Vy(1)=0;Vz(1)=0;
+Vbx(1) =0; Vby(1) =0;Vbz(1) =0; Vx(1)=0; Vy(1)=0; Vz(1)=0;
 %Начальные условия по угловым скоростям в географической и связанной СК
 wbx(1)=0;wby(1)=0;wbz(1)=0;wx(1)=0;wy(1)=0;wz(1)=0;
 %Начальные условия по углам ориентации
-psi(1)=5;theta(1)=0;gamma(1)=0;
+psi(1)=0;theta(1)=0;gamma(1)=0;
 %Начальные условия по координатам
 x(1)=0;y(1)=0;z(1)=0;
 %Параметры для ПИД регулятора
+Vy_need = 1;
 sigma_need = [0,0,0];% желаемые углы ориентации
 sigma_integral =[0,0,0];
 %Собираем моменты инерции в один массив
 I =[Ix,Iy,Iz];
-for i=1:t
+dt =0.1;
+for i=1:t/dt
     %%линейные ускорения
     %для оси х
     agx = -g*sind(theta(i)); %ускорение силы тяжести на ось х
@@ -70,8 +72,8 @@ for i=1:t
     dwzrot = Irot/Iz*wbx(i)*(W3+W4-W2-W1);%от ротора
     dwbz = dwzgyr+dwzaer+dwzeng+dwzrot;
     %вычисление линейных и гловых скоростей в связанной СК
-    Vbx(i+1) = Vbx(i)+axb; Vby(i+1)= Vby(i)+ayb;Vbz(i+1)=Vbz(i)+azb;
-    wbx(i+1)= wbx(i)+dwbx; wby(i+1)=wby(i)+dwby; wbz(i+1)=wbz(i)+dwbz;
+    Vbx(i+1) = Vbx(i)+axb*dt; Vby(i+1)= Vby(i)+ayb*dt;Vbz(i+1)=Vbz(i)+azb*dt;
+    wbx(i+1)= wbx(i)+dwbx*dt; wby(i+1)=wby(i)+dwby*dt; wbz(i+1)=wbz(i)+dwbz*dt;
     %пересчет ускорений в ИСК
     dVx = axb*cosd(psi(i))*cosd(theta(i))+ayb*(-cosd(psi(i))*sind(theta(i))*cosd(gamma(i))+sind(psi(i))*sind(gamma(i)))+azb*(cosd(psi(i))*sind(theta(i))*sind(gamma(i))+sind(psi(i))+sind(psi(i))*cosd(gamma(i)));
     dVy = axb*sind(theta(i))+ayb*cosd(theta(i))*cosd(gamma(i))-azb*cosd(theta(i))*sind(gamma(i));
@@ -83,16 +85,18 @@ for i=1:t
     dpsi = (wby(i+1)*cosd(gamma(i))-wbz(i+1)*sind(gamma(i)))/cosd(theta(i));
     dtheta= wbz(i+1)*cosd(gamma(i))+wby(i+1)*sind(gamma(i));
     dgamma= wbx(i+1)-(wby(i+1)*cosd(gamma(i))-wbz(i+1)*sind(gamma(i)))*tand(theta(i));
-    psi(i+1) = psi(i)+dpsi; theta(i+1) =theta(i)+dtheta;gamma(i+1) =gamma(i)+dgamma;
+    psi(i+1) = psi(i)+dpsi*dt; theta(i+1) =theta(i)+dtheta*dt;gamma(i+1) =gamma(i)+dgamma*dt;
     %вычисление скоростей и координат квадрокоптера в ИСК
-    Vx(i+1)= Vx(i)+dVx;Vy(i+1)= Vy(i)+dVy;Vz(i+1)= Vz(i)+dVz;
-    x(i+1)= x(i)+Vx(i+1);  y(i+1)= y(i)+Vy(i+1);  z(i+1)= z(i)+Vz(i+1);
+    Vx(i+1)= Vx(i)+dVx*dt;Vy(i+1)= Vy(i)+dVy*dt;Vz(i+1)= Vz(i)+dVz*dt;
+    x(i+1)= x(i)+Vx(i+1)*dt;  y(i+1)= y(i)+Vy(i+1)*dt;  z(i+1)= z(i)+Vz(i+1)*dt;
     %интеграл от угла
     sigma = [theta(i+1),gamma(i+1),psi(i+1)];
     sigmadot =[dtheta,dgamma,dpsi];
-    sigma_integral = sigma_integral+sigma;
+    sigma_integral = sigma_integral+sigma*dt;
     %ПИД регулятор
-    [W1,W2,W3,W4] = controller(sigma_need,sigma,sigmadot,m,g,k,0.7426*10^-6,I,L,sigma_integral);
+%     [W1,W2,W3,W4] = controller(sigma_need,sigma,sigmadot,m,g,k,0.7426*10^-4,I,L,sigma_integral);
+    OMEGA(:,i)=[W1,W2,W3,W4];
+     [W1,W2,W3,W4] = controller_velocity(Vy(i+1),Vy_need);
 end
 %%построение графиков
 %для координат
@@ -128,3 +132,13 @@ grid on
 legend('psi','theta','gamma')
 xlabel('Время')
 ylabel('углы ориентации')
+figure
+plot(OMEGA(1,:))
+hold on
+plot(OMEGA(2,:))
+hold on
+plot(OMEGA(3,:))
+hold on
+plot(OMEGA(4,:))
+grid on
+legend('W1','W2','W3','W4')
