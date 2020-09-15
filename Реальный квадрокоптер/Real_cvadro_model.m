@@ -18,6 +18,7 @@ cd =0.1;%аэродинамический коэффициент
 md =0.004;%аэродинамический коэффициент
 po=1.2;%плотность воздуха
 n=105/2;
+W0=128.5;%угловая скорость вращения винтов, для обеспечения зависания над поверхностью
 % Необходимая уголовая скорость вращения винтов для зависания на месте
 W1 = 128.5; W2 = 128.5; W3 = 128.5; W4 = 128.5; 
 %Начальные условия по скоростям в географической и связанной СК
@@ -28,11 +29,40 @@ wbx(1)=0;wby(1)=0;wbz(1)=0;wx(1)=0;wy(1)=0;wz(1)=0;
 psi(1)=0;theta(1)=0;gamma(1)=0;
 %Начальные условия по координатам
 x(1)=0;y(1)=0;z(1)=0;
-%Параметры для ПИД регулятора
+%%Параметры для ПИД регулятора
+% % %регулятор для координат
+% % Kp_coord = 0.4; 
+% % Kd_coord = 0.7;
+% % Ku_coord = 0.0;
+% % %регулятор для скоростей
+% % Kp_velocity = 0.05;
+% % Kd_velocity = 0.0;
+% % Ku_velocity = 0;
+%регулятор для координат
+Kp_coord = 0; 
+Kd_coord = 0;
+Ku_coord = 0;
+%регулятор для скоростей
+Kp_velocity = 0;
+Kd_velocity = 0;
+Ku_velocity = 0;
+%регулятор для углов
+Kp_angle = 1.2;
+Kd_angle = 0.09;
+Ku_angle = 0.5;
+%регулятор для угловых скоростей
+Kp_dangle = 0.051;
+Kd_dangle = 0.01;
+Ku_dangle = -0.01;
+%желаемая координата
 y_need = 10;
-Vy_need = 3;
+%Vy_need = 3;
 sigma_need = [0,0,0];% желаемые углы ориентации
 sigma_integral =[0,0,0];
+gamma_need = 5;
+y_integral =0;
+gamma_integral =0;
+ddgamma =0;
 %Собираем моменты инерции в один массив
 I =[Ix,Iy,Iz];
 dt =0.1;
@@ -58,19 +88,19 @@ for i=1:t/dt
     %по оси х
     dwxgyr = wby(i)*wbz(i)*((Iy-Iz)/Ix); %от собственного вращения квадрокоптера
     dwxaer = md*po*Vbx(i)^2/2/m*Sx*n;%от аэродинамического момента
-    dwxeng = (k*(W2^2-W1^2)-k*(W4^2-W3^2))*L/Ix;%от вращения двигателей
-    dwxrot = Irot/Ix*(W2+W1-W3-W4);%от ротора
+    dwxeng = (k*(W2^2+W1^2)-k*(W4^2+W3^2))*L/Ix;%от вращения двигателей
+    dwxrot = Irot/Ix*wbz(i)*(W2-W1-W3+W4);%от ротора
     dwbx =dwxgyr+dwxaer+dwxeng+dwxrot;
     %по оси у
     dwygyr = wbx(i)*wbz(i)*((Iz-Ix)/Iy);%от собственного вращения квадрокоптера
     dwyaer = md*po*Vby(i)^2/2/m*Sy*n;%от аэродинамического момента
-    dwyeng =(-k*(W1^2+W3^2)+k*(W2^2+W4^2))*b/Iy;%от вращения двигателей
+    dwyeng =(k*(W1^2+W3^2)-k*(W2^2+W4^2))*b/Iy;%от вращения двигателей
     dwby = dwygyr+dwyaer+dwyeng;
     %по оси z
     dwzgyr = wbx(i)*wby(i)*((Ix-Iy)/Iz);%от собственного вращения квадрокоптера
     dwzaer = md*po*Vbz(i)^2/2/m*Sz*n;%от аэродинамического момента
-    dwzeng = (k*(W4^2-W1^2)-k*(W2^2-W3^2))*L/Iz;%от вращения двигателей
-    dwzrot = Irot/Iz*wbx(i)*(W3+W4-W2-W1);%от ротора
+    dwzeng = (k*(W4^2+W1^2)-k*(W2^2+W3^2))*L/Iz;%от вращения двигателей
+    dwzrot = Irot/Iz*wbx(i)*(W3-W4-W2+W1);%от ротора
     dwbz = dwzgyr+dwzaer+dwzeng+dwzrot;
     %вычисление линейных и гловых скоростей в связанной СК
     Vbx(i+1) = Vbx(i)+axb*dt; Vby(i+1)= Vby(i)+ayb*dt;Vbz(i+1)=Vbz(i)+azb*dt;
@@ -90,16 +120,26 @@ for i=1:t/dt
     %вычисление скоростей и координат квадрокоптера в ИСК
     Vx(i+1)= Vx(i)+dVx*dt;Vy(i+1)= Vy(i)+dVy*dt;Vz(i+1)= Vz(i)+dVz*dt;
     x(i+1)= x(i)+Vx(i+1)*dt;  y(i+1)= y(i)+Vy(i+1)*dt;  z(i+1)= z(i)+Vz(i+1)*dt;
-    %интеграл от угла
+    %интеграл от угла и координаты
+    ddgamma = ddgamma+dgamma*dt;
     sigma = [theta(i+1),gamma(i+1),psi(i+1)];
     sigmadot =[dtheta,dgamma,dpsi];
     sigma_integral = sigma_integral+sigma*dt;
+    y_integral = y_integral+y(i+1)*dt;
+    gamma_integral = gamma_integral*dt;
     %ПИД регулятор
 %     [W1,W2,W3,W4] = controller(sigma_need,sigma,sigmadot,m,g,k,0.7426*10^-4,I,L,sigma_integral);
 %     [W1,W2,W3,W4] = controller_velocity(Vy(i+1),Vy_need);
-[W1,W2,W3,W4] = controller_Hight(y(i+1),y_need,Vy(i+1));
-OMEGA(:,i)=[W1,W2,W3,W4];
-     
+  %[W1,W2,W3,W4] = controller_Hight(y(i+1),y_need,Vy(i+1));
+  Vy_need = Kp_coord*(y_need-y(i+1))+Kd_coord*Vy(i+1)+Ku_coord*y_integral;%желаемая вертикальная скорость
+  delta_Fy = Kp_velocity*(Vy_need-Vy(i+1))+Kd_velocity*dVy + Ku_velocity*y(i+1);
+  gamma_dot_need = Kp_angle*(gamma_need-gamma(i+1))+Kd_angle*dgamma + Ku_angle*gamma_integral;%желаемая угловая скорость по gamma
+  delta_Mx = Kp_dangle*(gamma_dot_need-dgamma)+Kd_dangle*ddgamma + Ku_dangle*gamma(i+1);
+  W1 = W0+(Ix*delta_Mx + L*delta_Fy)/(4*L*k);
+  W2 = W0+(Ix*delta_Mx + L*delta_Fy)/(4*L*k);
+  W3 = W0-(Ix*delta_Mx - L*delta_Fy)/(4*L*k);
+  W4 = W0-(Ix*delta_Mx - L*delta_Fy)/(4*L*k);
+OMEGA(:,i)=[W1,W2,W3,W4];   
 end
 %%построение графиков
 %для координат
