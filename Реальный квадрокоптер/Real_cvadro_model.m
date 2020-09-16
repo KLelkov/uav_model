@@ -39,33 +39,43 @@ x(1)=0;y(1)=0;z(1)=0;
 % % Kd_velocity = 0.0;
 % % Ku_velocity = 0;
 %регул€тор дл€ координат
-Kp_coord = 0; 
-Kd_coord = 0;
-Ku_coord = 0;
+Kp_y = 0; Kp_x = 0; Kp_z = 0;
+Kd_y = 0; Kd_x = 0; Kd_z = 0;
+Ku_y = 0; Ku_x = 0; Ku_z = 0;
 %регул€тор дл€ скоростей
-Kp_velocity = 0;
-Kd_velocity = 0;
-Ku_velocity = 0;
+Kp_Vy = 0; Kp_Vx = 0; Kp_Vz = 0;
+Kd_Vy = 0; Kd_Vx = 0; Kd_Vz = 0;
+Ku_Vy = 0; Ku_Vx = 0; Ku_Vz = 0;
 %регул€тор дл€ углов
-Kp_angle = 1.2;
-Kd_angle = 0.09;
-Ku_angle = 0.5;
+Kp_gamma = 1.2; Kp_theta = 0; Kp_psi = 0;
+Kd_gamma = 0.09; Kd_theta = 0; Kd_psi = 0;
+Ku_gamma = 0.5; Ku_theta = 0; Ku_psi = 0;
 %регул€тор дл€ угловых скоростей
-Kp_dangle = 0.051;
-Kd_dangle = 0.01;
-Ku_dangle = -0.01;
+Kp_dgamma = 0.051;
+Kd_dgamma = 0.01;
+Ku_dgamma = -0.01;
 %желаема€ координата
 y_need = 10;
-%Vy_need = 3;
+x_need = 0;
+z_need =0;
 sigma_need = [0,0,0];% желаемые углы ориентации
 sigma_integral =[0,0,0];
 gamma_need = 5;
-y_integral =0;
-gamma_integral =0;
-ddgamma =0;
+y_integral = 0;
+x_integral = 0;
+z_integral = 0;
+gamma_integral = 0;
+ddgamma = 0;
+theta_need = 0;
+psi_need = 0;
+theta_integral = 0;
+psi_integral = 0;
+ddtheta = 0;
+ddpsi = 0;
 %—обираем моменты инерции в один массив
 I =[Ix,Iy,Iz];
 dt =0.1;
+%%ћоделирование
 for i=1:t/dt
     %%линейные ускорени€
     %дл€ оси х
@@ -122,24 +132,41 @@ for i=1:t/dt
     x(i+1)= x(i)+Vx(i+1)*dt;  y(i+1)= y(i)+Vy(i+1)*dt;  z(i+1)= z(i)+Vz(i+1)*dt;
     %интеграл от угла и координаты
     ddgamma = ddgamma+dgamma*dt;
+    ddtheta = ddtheta+dtheta*dt;
+    ddpsi = ddpsi+dpsi*dt;
     sigma = [theta(i+1),gamma(i+1),psi(i+1)];
     sigmadot =[dtheta,dgamma,dpsi];
     sigma_integral = sigma_integral+sigma*dt;
     y_integral = y_integral+y(i+1)*dt;
-    gamma_integral = gamma_integral*dt;
-    %ѕ»ƒ регул€тор
+    x_integral = x_integral+x(i+1)*dt;
+    z_integral = z_integral+z(i+1)*dt;
+    gamma_integral = gamma_integral+gamma(i+1)*dt;
+    theta_integral = theta_integral+theta(i+1)*dt;
+    psi_integral = psi_integral+psi(i+1)*dt;
+%%ѕ»ƒ регул€тор
 %     [W1,W2,W3,W4] = controller(sigma_need,sigma,sigmadot,m,g,k,0.7426*10^-4,I,L,sigma_integral);
 %     [W1,W2,W3,W4] = controller_velocity(Vy(i+1),Vy_need);
   %[W1,W2,W3,W4] = controller_Hight(y(i+1),y_need,Vy(i+1));
-  Vy_need = Kp_coord*(y_need-y(i+1))+Kd_coord*Vy(i+1)+Ku_coord*y_integral;%желаема€ вертикальна€ скорость
-  delta_Fy = Kp_velocity*(Vy_need-Vy(i+1))+Kd_velocity*dVy + Ku_velocity*y(i+1);
-  gamma_dot_need = Kp_angle*(gamma_need-gamma(i+1))+Kd_angle*dgamma + Ku_angle*gamma_integral;%желаема€ углова€ скорость по gamma
-  delta_Mx = Kp_dangle*(gamma_dot_need-dgamma)+Kd_dangle*ddgamma + Ku_dangle*gamma(i+1);
-  W1 = W0+(Ix*delta_Mx + L*delta_Fy)/(4*L*k);
-  W2 = W0+(Ix*delta_Mx + L*delta_Fy)/(4*L*k);
-  W3 = W0-(Ix*delta_Mx - L*delta_Fy)/(4*L*k);
-  W4 = W0-(Ix*delta_Mx - L*delta_Fy)/(4*L*k);
-OMEGA(:,i)=[W1,W2,W3,W4];   
+  %ƒл€ вертикального канала
+  Vy_need = Kp_y*(y_need-y(i+1))+Kd_y*Vy(i+1)+Ku_y*y_integral;%желаема€ вертикальна€ скорость
+  delta_Fy = Kp_Vy*(Vy_need-Vy(i+1))+Kd_Vy*dVy + Ku_Vy*y(i+1);
+  gamma_dot_need = Kp_gamma*(gamma_need-gamma(i+1))+Kd_gamma*dgamma + Ku_gamma*gamma_integral;%желаема€ углова€ скорость по gamma
+  delta_Mx = Kp_dgamma*(gamma_dot_need-dgamma)+Kd_dgamma*ddgamma + Ku_dgamma*gamma(i+1);
+  %%дл€ горизонтального(оси х и z)
+  %ось х
+  Vx_need = Kp_x*(x_need-x(i+1))+Kd_x*Vx(i+1)+Ku_x*x_integral;
+  theta_need = Kp_Vx*(Vx_need -Vx(i+1))+Kd_Vx*dVx +Ku_Vx*x(i+1);
+  delta_Mz = Kp_theta*(theta_need - theta(i+1))+Kd_theta*dtheta+Ku_theta*theta_integral;
+  % ось z
+  Vz_need = Kp_z*(z_need-z(i+1))+Kd_z*Vz(i+1)+Ku_z*z_integral;
+  psi_need = Kp_Vz*(Vz_need -Vz(i+1))+Kd_Vz*dVz +Ku_Vz*z(i+1);
+  delta_My = Kp_psi*(psi_need - psi(i+1))+Kd_psi*dpsi+Ku_psi*psi_integral;
+  %формирование мощностей на двигатели
+  W1 = W0+(Iy*L^2*delta_Fy + Ix^2*b*delta_Mx + Ix*Iy*L*delta_Mx + 2*Ix*Iy*L*delta_My + 2*Iy*Iz*L*delta_Mz + Ix*L*b*delta_Fy)/(4*L*k*(Ix*b + Iy*L));
+  W2 = W0+(Iy*L^2*delta_Fy + Ix^2*b*delta_Mx + Ix*Iy*L*delta_Mx - 2*Ix*Iy*L*delta_My - 2*Iy*Iz*L*delta_Mz + Ix*L*b*delta_Fy)/(4*L*k*(Ix*b + Iy*L));
+  W3 = W0+(Iy*L^2*delta_Fy - Ix^2*b*delta_Mx - Ix*Iy*L*delta_Mx + 2*Ix*Iy*L*delta_My - 2*Ix*Iz*b*delta_Mz + Ix*L*b*delta_Fy)/(4*L*k*(Ix*b + Iy*L));
+  W4 = W0+(Iy*L^2*delta_Fy - Ix^2*b*delta_Mx - Ix*Iy*L*delta_Mx - 2*Ix*Iy*L*delta_My + 2*Ix*Iz*b*delta_Mz + Ix*L*b*delta_Fy)/(4*L*k*(Ix*b + Iy*L));
+OMEGA(:,i)=[W1,W2,W3,W4]; 
 end
 %%построение графиков
 %дл€ координат
