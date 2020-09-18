@@ -1,5 +1,6 @@
 clear
 clc
+close all
 %Конструктивные параметры
 a = 0.36;%длина квадрокоптера и ширина
 k = 1.4851*10^-4;% k - подъемный коэффициен
@@ -31,15 +32,15 @@ psi(1)=0;theta(1)=0;gamma(1)=0;
 x(1)=0;y(1)=0;z(1)=0;
 %%Параметры для ПИД регулятора
 %регулятор для координат
-Kp_y = 0; Kp_x = 0.004; Kp_z = 0;%Kp_y = 0.4
-Kd_y = 0; Kd_x = 2; Kd_z = 0;%Kd_y = 0.7
+Kp_y = 0.4; Kp_x = 0.004; Kp_z = 0;%Kp_y = 0.4
+Kd_y = 0.7; Kd_x = 2; Kd_z = 0;%Kd_y = 0.7
 Ku_y = 0; Ku_x = 1; Ku_z = 0;
 %регулятор для скоростей
-Kp_Vy = 0.0; Kp_Vx = 0.000001; Kp_Vz = 0;%Kp_Vy =0.05
+Kp_Vy = 0.05; Kp_Vx = 0.000001; Kp_Vz = 0;%Kp_Vy =0.05
 Kd_Vy = 0; Kd_Vx = 0; Kd_Vz = 0;
 Ku_Vy = 0; Ku_Vx = -0; Ku_Vz = 0;
 %регулятор для углов
-Kp_gamma = 0; Kp_theta = 0.0000000001; Kp_psi = 0;
+Kp_gamma = 0; Kp_theta = 0.1; Kp_psi = 0;
 Kd_gamma = 0.0; Kd_theta = -0; Kd_psi = 0;
 Ku_gamma = 0.0; Ku_theta = -0; Ku_psi = 0;
 %регулятор для угловых скоростей
@@ -47,8 +48,8 @@ Kp_dgamma = 0.051;
 Kd_dgamma = 0.01;
 Ku_dgamma = -0.01;
 %желаемая координата
-y_need = 10;
-x_need = 5;
+y_need = 0;
+x_need = 0;
 z_need =0;
 sigma_need = [0,0,0];% желаемые углы ориентации
 sigma_integral =[0,0,0];
@@ -68,6 +69,7 @@ ddpsi = 0;
 I =[Ix,Iy,Iz];
 dt =0.1;
 %%Моделирование
+md = 0;
 for i=1:t/dt
     %%линейные ускорения
     %для оси х
@@ -148,6 +150,7 @@ for i=1:t/dt
   %ось х
   Vx_need = Kp_x*(x_need-x(i+1))+Kd_x*Vx(i+1)+Ku_x*x_integral;
   theta_need = Kp_Vx*(Vx_need -Vx(i+1))+Kd_Vx*dVx +Ku_Vx*x(i+1);
+  theta_need = 5;
   delta_Mz = Kp_theta*(theta_need - theta(i+1))+Kd_theta*dtheta+Ku_theta*theta_integral;
   % ось z
   Vz_need = Kp_z*(z_need-z(i+1))+Kd_z*Vz(i+1)+Ku_z*z_integral;
