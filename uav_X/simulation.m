@@ -29,11 +29,17 @@ uav_state.dyaw = uav_state.W(2); % угловая скорость вокруг оси Y
 W0 = 107.5;
 
 %% Полётное задание
+% Необходимые координаты (реализовано только управление по Y)
 flight_mission.coords = [0; 0; 0];
+% Необходимые скорости в горизонтальной СК: продольная, вертикальная и
+% боковая
 flight_mission.V = [5; 0; 0];
+% Необходиые углы ориентации (углы крена и тангажа рассчитываются
+% автоматически в зависимости от скорости)
 flight_mission.roll = 0;
 flight_mission.pitch = 0;
 flight_mission.yaw = 30;
+% Неообходимые угловые скорости (рассчитываются автоматически)
 flight_mission.droll = 0;
 flight_mission.dpitch = 0;
 flight_mission.dyaw = 0;
@@ -106,6 +112,7 @@ for i = 2:nSim
     rates(i,:) = [uav_state.droll, uav_state.dpitch, uav_state.dyaw];
     motors(i,:) = controls;
     Time(i) = Time(i-1) + dt;
+    
 end
 
 %% Координаты и углы
