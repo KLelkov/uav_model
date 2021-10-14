@@ -1,2 +1,3 @@
 # uav_model
-Моделирование квадрокоптера
+Simulation of quad rotor UAV flight and control.
+Done in colaboration with Ilya Nikitenko.
